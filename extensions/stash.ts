@@ -397,7 +397,7 @@ export default function (pi: ExtensionAPI) {
     ctx.ui.setEditorText(popped.text);
     const remaining = getStashForCwd(ctx.cwd).length;
     if (remaining > 0) {
-      ctx.ui.notify("Restored stashed prompt (ctrl+s to cycle)", "info");
+      ctx.ui.notify("Restored stashed prompt (ctrl+alt+s to cycle)", "info");
     } else {
       ctx.ui.notify("Restored stashed prompt", "info");
     }
@@ -448,7 +448,7 @@ export default function (pi: ExtensionAPI) {
   };
 
   // Register Shortcuts
-  pi.registerShortcut("ctrl+s", {
+  pi.registerShortcut("ctrl+alt+s", {
     description: "Stash currently typed prompt or pop stashed prompt",
     handler: (ctx) => handleCtrlS(ctx),
   });

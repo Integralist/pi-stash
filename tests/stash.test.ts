@@ -275,7 +275,7 @@ describe("extension lifecycle & shortcuts", () => {
 
     defaultExtension(mockPi);
 
-    expect(shortcuts.has("ctrl+s")).toBe(true);
+    expect(shortcuts.has("ctrl+alt+s")).toBe(true);
     expect(shortcuts.has("ctrl+shift+s")).toBe(true);
     expect(commands.has("stash")).toBe(true);
 
@@ -298,7 +298,7 @@ describe("extension lifecycle & shortcuts", () => {
       },
     };
 
-    const ctrlS = shortcuts.get("ctrl+s")!;
+    const ctrlS = shortcuts.get("ctrl+alt+s")!;
 
     // 1. User types prompt A and presses ctrl+s
     editorText = "Prompt A";
@@ -373,7 +373,7 @@ describe("extension lifecycle & shortcuts", () => {
       },
     };
 
-    const ctrlS = shortcuts.get("ctrl+s")!;
+    const ctrlS = shortcuts.get("ctrl+alt+s")!;
 
     // Stash "foobar"
     await ctrlS(mockCtx);

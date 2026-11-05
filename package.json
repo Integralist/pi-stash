@@ -1,7 +1,7 @@
 {
   "name": "pi-stash",
   "version": "0.1.0",
-  "description": "Pi extension to stash and unstash typed prompts with ctrl+s and fuzzy search with ctrl+shift+s",
+  "description": "Pi extension to stash and unstash typed prompts with ctrl+alt+s and fuzzy search with ctrl+shift+s",
   "type": "module",
   "license": "MIT",
   "keywords": [
