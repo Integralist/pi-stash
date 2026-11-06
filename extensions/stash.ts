@@ -26,12 +26,6 @@ export interface StashEntry {
   timestamp: number;
 }
 
-export interface StashCycleState {
-  active: boolean;
-  currentEntry: StashEntry;
-  lastInjectedText: string;
-}
-
 // ============================================================================
 // Storage Helpers
 // ============================================================================
@@ -108,12 +102,6 @@ export function popStashEntry(cwd: string, storagePath: string = getDefaultStora
   const [popped] = entries.splice(index, 1);
   saveStash(entries, storagePath);
   return popped;
-}
-
-export function pushStashEntryToBack(entry: StashEntry, storagePath: string = getDefaultStoragePath()): void {
-  const entries = loadStash(storagePath);
-  entries.push(entry);
-  saveStash(entries, storagePath);
 }
 
 export function deleteStashEntryById(id: string, storagePath: string = getDefaultStoragePath()): boolean {
@@ -338,40 +326,14 @@ export class StashSearchOverlay implements Component, Focusable {
 // ============================================================================
 
 export default function (pi: ExtensionAPI) {
-  let cycleState: StashCycleState | null = null;
-
-  // Reset cycling state when user submits a prompt
-  pi.on("input", (_event, _ctx) => {
-    cycleState = null;
-  });
-
-  // Handle Ctrl+S: Stash or Pop/Cycle
+  // Handle Ctrl+Alt+S: Stash or Pop
   const handleCtrlS = (ctx: ExtensionContext | ExtensionCommandContext) => {
     if (!ctx.hasUI) return;
 
     const editorText = ctx.ui.getEditorText() ?? "";
 
-    // 1. If currently cycling and prompt text hasn't been modified: pop next and rotate previous
-    if (cycleState?.active && editorText === cycleState.lastInjectedText) {
-      const nextPopped = popStashEntry(ctx.cwd);
-      if (!nextPopped) {
-        ctx.ui.notify("No other stashed prompts", "info");
-        return;
-      }
-      pushStashEntryToBack(cycleState.currentEntry);
-      cycleState = {
-        active: true,
-        currentEntry: nextPopped,
-        lastInjectedText: nextPopped.text,
-      };
-      ctx.ui.setEditorText(nextPopped.text);
-      ctx.ui.notify("Restored stashed prompt (cycled)", "info");
-      return;
-    }
-
-    // 2. If prompt box has text (and wasn't part of active cycle): stash it!
+    // 1. If prompt box has text: stash it!
     if (editorText.trim().length > 0) {
-      cycleState = null;
       pushStashEntry(editorText, ctx.cwd);
       ctx.ui.setEditorText("");
       const count = getStashForCwd(ctx.cwd).length;
@@ -379,35 +341,21 @@ export default function (pi: ExtensionAPI) {
       return;
     }
 
-    // 3. Prompt box is empty: Pop/Restore top item immediately from disk
-    cycleState = null;
-
+    // 2. Prompt box is empty: Pop/Restore top item immediately from disk
     const popped = popStashEntry(ctx.cwd);
     if (!popped) {
       ctx.ui.notify("Stash is empty", "warning");
       return;
     }
 
-    cycleState = {
-      active: true,
-      currentEntry: popped,
-      lastInjectedText: popped.text,
-    };
-
     ctx.ui.setEditorText(popped.text);
-    const remaining = getStashForCwd(ctx.cwd).length;
-    if (remaining > 0) {
-      ctx.ui.notify("Restored stashed prompt (ctrl+alt+s to cycle)", "info");
-    } else {
-      ctx.ui.notify("Restored stashed prompt", "info");
-    }
+    ctx.ui.notify("Restored stashed prompt", "info");
   };
 
   // Handle Ctrl+Shift+S: Fuzzy Search Overlay
   const handleFuzzySearch = async (ctx: ExtensionContext | ExtensionCommandContext) => {
     if (!ctx.hasUI) return;
 
-    cycleState = null;
     const items = getStashForCwd(ctx.cwd);
     if (items.length === 0) {
       ctx.ui.notify("Stash is empty", "warning");
@@ -424,15 +372,11 @@ export default function (pi: ExtensionAPI) {
             deleteStashEntryById(selected.id);
             ctx.ui.setEditorText(selected.text);
             ctx.ui.notify("Restored stashed prompt", "info");
-            cycleState = null;
             done();
           },
           (deleted) => {
             deleteStashEntryById(deleted.id);
             ctx.ui.notify("Deleted stashed prompt", "info");
-            if (cycleState?.active) {
-              cycleState = null;
-            }
           },
           () => {
             done();
@@ -480,7 +424,6 @@ export default function (pi: ExtensionAPI) {
         } else {
           ctx.ui.setEditorText(popped.text);
           ctx.ui.notify("Restored stashed prompt", "info");
-          cycleState = null;
         }
         return;
       }
@@ -493,7 +436,6 @@ export default function (pi: ExtensionAPI) {
       if (sub === "clear") {
         const count = clearStashEntries(ctx.cwd);
         ctx.ui.notify(`Cleared ${count} stashed prompt(s)`, "info");
-        cycleState = null;
         return;
       }
 

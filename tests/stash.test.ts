@@ -253,10 +253,9 @@ describe("extension lifecycle & shortcuts", () => {
     }
   });
 
-  it("handles push, LIFO pop, cycling, and submit consumption", async () => {
+  it("handles push, LIFO pop, and toggle re-stashing", async () => {
     const shortcuts = new Map<string, (ctx: any) => Promise<void> | void>();
     const commands = new Map<string, any>();
-    const eventHandlers = new Map<string, Array<(event: any, ctx: any) => void>>();
 
     const mockPi = {
       registerShortcut: (key: string, opts: any) => {
@@ -265,12 +264,7 @@ describe("extension lifecycle & shortcuts", () => {
       registerCommand: (name: string, opts: any) => {
         commands.set(name, opts);
       },
-      on: (event: string, handler: any) => {
-        const list = eventHandlers.get(event) ?? [];
-        list.push(handler);
-        eventHandlers.set(event, list);
-        return () => {};
-      },
+      on: () => () => {},
     } as any;
 
     defaultExtension(mockPi);
@@ -300,50 +294,52 @@ describe("extension lifecycle & shortcuts", () => {
 
     const ctrlS = shortcuts.get("ctrl+alt+s")!;
 
-    // 1. User types prompt A and presses ctrl+s
+    // 1. User types prompt A and presses ctrl+alt+s
     editorText = "Prompt A";
     await ctrlS(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (1 in stash)");
 
-    // 2. User types prompt B and presses ctrl+s
+    // 2. User types prompt B and presses ctrl+alt+s
     editorText = "Prompt B";
     await ctrlS(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (2 in stash)");
 
-    // 3. Prompt box is empty, user presses ctrl+s -> restores Prompt B (LIFO)
-    // CRITICAL: Prompt B must be popped immediately from disk!
+    // 3. Prompt box is empty, user presses ctrl+alt+s -> restores Prompt B (LIFO)
     await ctrlS(mockCtx);
     expect(editorText).toBe("Prompt B");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
 
-    // 4. Consecutive ctrl+s cycles to Prompt A (Prompt B returns to stash, Prompt A is popped)
+    // 4. Box has text (Prompt B), user presses ctrl+alt+s -> re-stashes Prompt B
     await ctrlS(mockCtx);
-    expect(editorText).toBe("Prompt A");
-    expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt B"]);
+    expect(editorText).toBe("");
+    expect(notifications[notifications.length - 1]).toContain("Prompt stashed (2 in stash)");
+    expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt B", "Prompt A"]);
 
-    // 5. Consecutive ctrl+s cycles back to Prompt B
+    // 5. Box is empty, user presses ctrl+alt+s -> restores Prompt B again
     await ctrlS(mockCtx);
     expect(editorText).toBe("Prompt B");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
 
-    // 6. User submits Prompt B (Enter key -> input event)
-    const inputHandlers = eventHandlers.get("input") ?? [];
-    for (const handler of inputHandlers) {
-      handler({ text: "Prompt B" }, mockCtx);
-    }
-
-    // 7. Prompt B was already consumed from stash! Prompt A is now the only one remaining.
+    // 6. User submits Prompt B (prompt box becomes empty)
     editorText = "";
+
+    // 7. Prompt box is empty, user presses ctrl+alt+s -> restores Prompt A (LIFO)
     await ctrlS(mockCtx);
     expect(editorText).toBe("Prompt A");
     expect(getStashForCwd("/workspace/my-repo", testFile)).toEqual([]);
 
-    // 8. Consecutive ctrl+s when no other items exist notifies "No other stashed prompts"
+    // 8. Box has text (Prompt A), user presses ctrl+alt+s -> re-stashes Prompt A
+    await ctrlS(mockCtx);
+    expect(editorText).toBe("");
+    expect(notifications[notifications.length - 1]).toContain("Prompt stashed (1 in stash)");
+    expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
+
+    // 9. Box is empty, user presses ctrl+alt+s -> restores Prompt A again
     await ctrlS(mockCtx);
     expect(editorText).toBe("Prompt A");
-    expect(notifications[notifications.length - 1]).toContain("No other stashed prompts");
+    expect(getStashForCwd("/workspace/my-repo", testFile)).toEqual([]);
   });
 
   it("ensures popped prompt is immediately absent from stash without waiting for submit", async () => {
