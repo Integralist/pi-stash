@@ -6,10 +6,10 @@ A [Pi](https://github.com/earendil-works/pi) extension that allows you to stash 
 
 ## Features
 
-- **`Ctrl+Alt+S` (Stash / Restore)**:
-  - If the prompt box has text, `Ctrl+Alt+S` stashes it to disk and clears the input so you can start a new prompt.
-  - If the prompt box is empty, `Ctrl+Alt+S` pops and restores the most recent stashed prompt (LIFO order).
-- **`Ctrl+Shift+S` (Fuzzy Search)**:
+- **`Cmd+Shift+C` (Stash / Restore)**:
+  - If the prompt box has text, `Cmd+Shift+C` stashes it to disk and clears the input so you can start a new prompt.
+  - If the prompt box is empty, `Cmd+Shift+C` pops and restores the most recent stashed prompt (LIFO order).
+- **`Cmd+Shift+L` (Fuzzy Search)**:
   - Opens a floating fuzzy search overlay to filter and browse stashed prompts.
   - Press `Enter` to restore and remove the selected prompt.
   - Press `Delete` or `Ctrl+D` to delete an entry directly from the stash.

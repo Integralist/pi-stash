@@ -269,8 +269,8 @@ describe("extension lifecycle & shortcuts", () => {
 
     defaultExtension(mockPi);
 
-    expect(shortcuts.has("ctrl+alt+s")).toBe(true);
-    expect(shortcuts.has("ctrl+shift+s")).toBe(true);
+    expect(shortcuts.has("super+shift+c")).toBe(true);
+    expect(shortcuts.has("super+shift+l")).toBe(true);
     expect(commands.has("stash")).toBe(true);
 
     let editorText = "";
@@ -292,52 +292,52 @@ describe("extension lifecycle & shortcuts", () => {
       },
     };
 
-    const ctrlS = shortcuts.get("ctrl+alt+s")!;
+    const stashKey = shortcuts.get("super+shift+c")!;
 
-    // 1. User types prompt A and presses ctrl+alt+s
+    // 1. User types prompt A and presses super+shift+c (cmd+shift+c)
     editorText = "Prompt A";
-    await ctrlS(mockCtx);
+    await stashKey(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (1 in stash)");
 
-    // 2. User types prompt B and presses ctrl+alt+s
+    // 2. User types prompt B and presses super+shift+c
     editorText = "Prompt B";
-    await ctrlS(mockCtx);
+    await stashKey(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (2 in stash)");
 
-    // 3. Prompt box is empty, user presses ctrl+alt+s -> restores Prompt B (LIFO)
-    await ctrlS(mockCtx);
+    // 3. Prompt box is empty, user presses super+shift+c -> restores Prompt B (LIFO)
+    await stashKey(mockCtx);
     expect(editorText).toBe("Prompt B");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
 
-    // 4. Box has text (Prompt B), user presses ctrl+alt+s -> re-stashes Prompt B
-    await ctrlS(mockCtx);
+    // 4. Box has text (Prompt B), user presses super+shift+c -> re-stashes Prompt B
+    await stashKey(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (2 in stash)");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt B", "Prompt A"]);
 
-    // 5. Box is empty, user presses ctrl+alt+s -> restores Prompt B again
-    await ctrlS(mockCtx);
+    // 5. Box is empty, user presses super+shift+c -> restores Prompt B again
+    await stashKey(mockCtx);
     expect(editorText).toBe("Prompt B");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
 
     // 6. User submits Prompt B (prompt box becomes empty)
     editorText = "";
 
-    // 7. Prompt box is empty, user presses ctrl+alt+s -> restores Prompt A (LIFO)
-    await ctrlS(mockCtx);
+    // 7. Prompt box is empty, user presses super+shift+c -> restores Prompt A (LIFO)
+    await stashKey(mockCtx);
     expect(editorText).toBe("Prompt A");
     expect(getStashForCwd("/workspace/my-repo", testFile)).toEqual([]);
 
-    // 8. Box has text (Prompt A), user presses ctrl+alt+s -> re-stashes Prompt A
-    await ctrlS(mockCtx);
+    // 8. Box has text (Prompt A), user presses super+shift+c -> re-stashes Prompt A
+    await stashKey(mockCtx);
     expect(editorText).toBe("");
     expect(notifications[notifications.length - 1]).toContain("Prompt stashed (1 in stash)");
     expect(getStashForCwd("/workspace/my-repo", testFile).map((e) => e.text)).toEqual(["Prompt A"]);
 
-    // 9. Box is empty, user presses ctrl+alt+s -> restores Prompt A again
-    await ctrlS(mockCtx);
+    // 9. Box is empty, user presses super+shift+c -> restores Prompt A again
+    await stashKey(mockCtx);
     expect(editorText).toBe("Prompt A");
     expect(getStashForCwd("/workspace/my-repo", testFile)).toEqual([]);
   });
@@ -369,15 +369,15 @@ describe("extension lifecycle & shortcuts", () => {
       },
     };
 
-    const ctrlS = shortcuts.get("ctrl+alt+s")!;
+    const stashKey = shortcuts.get("super+shift+c")!;
 
     // Stash "foobar"
-    await ctrlS(mockCtx);
+    await stashKey(mockCtx);
     expect(editorText).toBe("");
     expect(getStashForCwd("/workspace/my-repo", testFile).length).toBe(1);
 
-    // Press ctrl+s on empty box -> restores "foobar"
-    await ctrlS(mockCtx);
+    // Press super+shift+c on empty box -> restores "foobar"
+    await stashKey(mockCtx);
     expect(editorText).toBe("foobar");
 
     // Immediately verify stash is empty — before any prompt submit!

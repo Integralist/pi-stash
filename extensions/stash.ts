@@ -326,8 +326,8 @@ export class StashSearchOverlay implements Component, Focusable {
 // ============================================================================
 
 export default function (pi: ExtensionAPI) {
-  // Handle Ctrl+Alt+S: Stash or Pop
-  const handleCtrlS = (ctx: ExtensionContext | ExtensionCommandContext) => {
+  // Handle Super+Shift+C (Cmd+Shift+C): Stash or Pop
+  const handleStash = (ctx: ExtensionContext | ExtensionCommandContext) => {
     if (!ctx.hasUI) return;
 
     const editorText = ctx.ui.getEditorText() ?? "";
@@ -392,12 +392,12 @@ export default function (pi: ExtensionAPI) {
   };
 
   // Register Shortcuts
-  pi.registerShortcut("ctrl+alt+s", {
+  pi.registerShortcut("super+shift+c", {
     description: "Stash currently typed prompt or pop stashed prompt",
-    handler: (ctx) => handleCtrlS(ctx),
+    handler: (ctx) => handleStash(ctx),
   });
 
-  pi.registerShortcut("ctrl+shift+s", {
+  pi.registerShortcut("super+shift+l", {
     description: "Fuzzy search stashed prompts",
     handler: (ctx) => handleFuzzySearch(ctx),
   });
@@ -410,7 +410,7 @@ export default function (pi: ExtensionAPI) {
       if (!sub) {
         const text = ctx.ui.getEditorText() ?? "";
         if (text.trim().length > 0) {
-          handleCtrlS(ctx);
+          handleStash(ctx);
         } else {
           await handleFuzzySearch(ctx);
         }
